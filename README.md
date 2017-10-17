@@ -1,4 +1,4 @@
-# LampForJessie
+# LampForStretch
 Non Interactive Bash Debian Stretch Linux Lamp Installer,
 easily spelled NIBDSLLI.
 
