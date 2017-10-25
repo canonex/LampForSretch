@@ -7,7 +7,7 @@ easily spelled NIBDSLLI.
    - if building a server consider using [Debian netinstall ](https://www.debian.org/distrib/netinst)
    - in tasksel let only "Standard system utilities" selected.
 
-2. Become root, copy/download/get this scripts in your home execute install.sh as root.  
+2. Become root, copy/download/get/clone this scripts in your computer execute install.sh as root.  
 Some operation may take a while, be patient.
 
 ## What you should get:
