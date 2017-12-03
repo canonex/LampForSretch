@@ -10,7 +10,7 @@ PHPMYADMINTPASSWORD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head 
 
 
 echo "MySql root password: $MYSQLROOTPASSWORD" >> InfoCurrentInstall.txt
-echo "PhpMyAdmin root password: $PHPMYADMINTPASSWORD" >> InfoCurrentInstall.txt
+echo "PhpMyAdmin password for user phpmyadmin: $PHPMYADMINTPASSWORD" >> InfoCurrentInstall.txt
 
 
 export DEBIAN_FRONTEND=noninteractive
@@ -93,11 +93,19 @@ else
 	echo "MySql installed and hardened" >> InfoCurrentInstall.txt
 fi
 
+#To connect with MySql Workbench (shows error but works anyway)
+#GRANT ALL PRIVILEGES ON . TO 'root'@'localhost' IDENTIFIED BY 'mypass' WITH GRANT OPTION;
+
 
 echo "						- Apache"
 #php5-mysql
 #php-apc for some uses
-apt-get install -y php5 php5-mysqlnd libapache2-mod-php5 php5-mcrypt php5-curl libssh2-php git
+#In php7 mysqlnd is not a separate package
+#Removed version informations to get the current version
+#Added php-gd for image manipulation
+#Suggested php7.0-opcache
+apt-get install -y php libapache2-mod-php php-mcrypt php-curl php-ssh2 php-gd git
+
 
 echo "						- PhpMyAdmin"
 echo 'phpmyadmin phpmyadmin/dbconfig-install boolean true' | debconf-set-selections
@@ -110,6 +118,10 @@ echo "phpmyadmin phpmyadmin/mysql/app-pass password $PHPMYADMINTPASSWORD" |debco
 echo "phpmyadmin phpmyadmin/app-password-confirm password $PHPMYADMINTPASSWORD" | debconf-set-selections
 apt-get -y install phpmyadmin
 echo PURGE | debconf-communicate phpmyadmin
+
+#Allow phpmyadmin to manage all databases
+mysql -e "GRANT ALL PRIVILEGES ON *.* TO 'phpmyadmin'@'localhost' WITH GRANT OPTION;"
+mysql -e "FLUSH PRIVILEGES;"
 
 	echo "Php installed" >> InfoCurrentInstall.txt
 

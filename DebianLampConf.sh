@@ -50,7 +50,7 @@ echo "						apache2.conf"
 echo "ServerTokens Prod" >> $CURRENT
 echo "ServerSignature Off" >> $CURRENT
 
-CURRENT="/etc/php5/apache2/php.ini"
+CURRENT="/etc/php/7.0/apache2/php.ini"
 #Backup
 cp $CURRENT $CURRENT.old
 

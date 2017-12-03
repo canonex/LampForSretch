@@ -17,8 +17,10 @@ Some operation may take a while, be patient.
  - headers and rewrite enabled
  - php.ini date.timezone option on Europe Rome: please configure your position [Php Timezones](http://php.net/manual/en/timezones.php)
 
+Fail2Ban has many issues in Debian Stretch, please check manually the installation using:
+service fail2ban status
 
 Please have a look at the code:
-is commented and, more or less, self explaining.
+it is commented and, more or less, self explaining.
 
 End
