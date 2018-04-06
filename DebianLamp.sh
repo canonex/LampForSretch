@@ -1,5 +1,10 @@
 #!/bin/bash -xv
 ##to debug #!/bin/bash -xv
+set -x
+trap read debug
+
+: <<'END'
+END
 
 echo "Lamp installer!" > InfoCurrentInstall.txt
 echo "Today, $(date), we are installing on $(hostname)" >> InfoCurrentInstall.txt
@@ -24,6 +29,17 @@ apt-get update
 echo -e "\n"
 echo "				Installing Ssh, fail2ban, Expect and Debconf for automatic installations"
 apt-get -y install ssh expect debconf-utils fail2ban iptables aptitude
+
+echo "						...restarting and checking"
+service fail2ban restart
+if [ $? -ne 0 ]; then
+	MSG="Please Check the Fail2Ban installation, there is some $(tput bold)$(tput setaf 1)Problem$(tput sgr0)"
+	echo $MSG
+	ERRORS="$ERRORS Fail2BanInstallation"
+else
+	echo "Installed Services run $(tput bold)$(tput setaf 2)Sucessfully$(tput sgr0)"
+	echo "Fail2Ban installed" >> InfoCurrentInstall.txt
+fi
 
 echo -e "\n"
 echo "				Installing Lamp"
@@ -116,11 +132,24 @@ echo "phpmyadmin phpmyadmin/mysql/admin-pass password $MYSQLROOTPASSWORD" | debc
 #Phpmysql pass
 echo "phpmyadmin phpmyadmin/mysql/app-pass password $PHPMYADMINTPASSWORD" |debconf-set-selections
 echo "phpmyadmin phpmyadmin/app-password-confirm password $PHPMYADMINTPASSWORD" | debconf-set-selections
+#Connection method
+#Courtesy of https://stackoverflow.com/questions/30741573/debconf-selections-for-phpmyadmin-unattended-installation-with-no-webserver-inst/30741574
+echo "phpmyadmin phpmyadmin/mysql/method select unix socket" |debconf-set-selections
 apt-get -y install phpmyadmin
 echo PURGE | debconf-communicate phpmyadmin
 
 #Allow phpmyadmin to manage all databases
-mysql -e "GRANT ALL PRIVILEGES ON *.* TO 'phpmyadmin'@'localhost' WITH GRANT OPTION;"
+#Read directly from control user configuration the password
+PASS=$(cat /etc/phpmyadmin/config-db.php | grep '$dbpass' | sed "s/\$dbpass=//; s/'//g; s/;//; ")
+
+echo "" >> InfoCurrentInstall.txt
+echo "Login to phpmyadmin using:" >> InfoCurrentInstall.txt
+echo "user phpmyadmin" >> InfoCurrentInstall.txt
+echo "password $PASS" >> InfoCurrentInstall.txt
+
+
+mysql -e "use mysql; CREATE USER 'phpmyadmin'@'localhost' IDENTIFIED BY '$PASS';"
+mysql -e "use mysql;GRANT ALL PRIVILEGES ON *.* TO 'phpmyadmin'@'localhost' WITH GRANT OPTION;"
 mysql -e "FLUSH PRIVILEGES;"
 
 	echo "Php installed" >> InfoCurrentInstall.txt
