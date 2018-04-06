@@ -1,5 +1,7 @@
 #!/bin/bash
 ##to debug #!/bin/bash -xv
+set -x
+trap read debug
 
 echo "Debian Lamp configurator!" >> InfoCurrentInstall.txt
 echo "Today, $(date), we are configuring $(hostname)" >> InfoCurrentInstall.txt
@@ -24,13 +26,27 @@ fi
 
 
 echo "						fail2ban"
-CURRENT=/etc/fail2ban/jail.conf
-#Backup
-cp $CURRENT $CURRENT.old
 
-#Sed replace in section
-sed -i '/\[DEFAULT\]/,/^\[/ s/bantime.*/bantime  = 3600/' $CURRENT
-sed -i '/\[ssh-ddos\]/,/^\[/ s/enabled.*/enabled  = true/' $CURRENT
+#Add a custom configuration file enabling other jails
+CURRENT="/etc/fail2ban/jail.d/customisation.local"
+touch $CURRENT
+
+cat > $CURRENT <<- EOM
+[DEFAULT]
+bantime = 3600
+
+[sshd]
+enabled = true
+
+[sshd-ddos]
+enabled = true
+
+[apache-badbots]
+enabled = true
+EOM
+
+#Suggested reading
+#https://it.wordpress.org/plugins/wp-fail2ban/
 
 service fail2ban restart
 if [ $? -ne 0 ]; then
@@ -56,13 +72,20 @@ cp $CURRENT $CURRENT.old
 
 echo "						php.ini"
 
-sed -i "s/max_execution_time.*/max_execution_time = 30/g" $CURRENT
+sed -i "s/max_execution_time .*/max_execution_time = 60/g" $CURRENT
 sed -i "s/max_input_time .*/max_input_time = 60/g" $CURRENT
-sed -i "s/memory_limit.*/memory_limit = 128M/g" $CURRENT
+sed -i "s/memory_limit.*/memory_limit = 512M/g" $CURRENT
 
-sed -i "s/post_max_size.*/post_max_size = 24M/g" $CURRENT
-sed -i "s/upload_max_filesize.*/upload_max_filesize = 24M/g" $CURRENT
+sed -i "s/post_max_size.*/post_max_size = 64M/g" $CURRENT
+sed -i "s/upload_max_filesize.*/upload_max_filesize = 64M/g" $CURRENT
 sed -i 's/;date.timezone.*/date.timezone = \"Europe\/Rome\"/g' $CURRENT
+
+
+
+CURRENT="/etc/phpmyadmin/apache.conf"
+#Backup
+cp $CURRENT $CURRENT.old
+
 
 service apache2 restart
 if [ $? -ne 0 ]; then
@@ -73,10 +96,18 @@ else
 	echo "Installed Services run $(tput bold)$(tput setaf 2)Sucessfully$(tput sgr0)"
 fi
 
+
 echo "						...next"
 echo "You can now manually setup phpmyadmin to be allowed only fron internal network:"
 echo "192.168.0.0/16, 255.255.255.0 (range 192.168.0.1 - 192.168.255.254)"
-echo "editing /etc/apache2/conf-available/phpmyadmin.conf"
+echo "editing /etc/phpmyadmin/apache.conf like:"
+echo ""
+echo "<Directory /usr/share/phpmyadmin>"
+echo "   Order Deny,Allow"
+echo "   Deny from All"
+echo "   Allow from 192.168.0.0/24"
+echo "   ..."
+echo ""
 echo "and restarting apache"
 echo "service apache2 restart"
 

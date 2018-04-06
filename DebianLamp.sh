@@ -16,7 +16,8 @@ PHPMYADMINTPASSWORD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head 
 
 echo "MySql root password: $MYSQLROOTPASSWORD" >> InfoCurrentInstall.txt
 echo "PhpMyAdmin password for user phpmyadmin: $PHPMYADMINTPASSWORD" >> InfoCurrentInstall.txt
-
+echo "________________________________________" >> InfoCurrentInstall.txt
+echo "" >> InfoCurrentInstall.txt
 
 export DEBIAN_FRONTEND=noninteractive
 
